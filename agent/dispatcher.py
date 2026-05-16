@@ -1,6 +1,7 @@
 import sys
 import json
 import os
+import re
 from dotenv import load_dotenv
 from agent.prompts import SYSTEM_PROMPT
 from agent.ollama_client import chat
@@ -26,16 +27,35 @@ _TOOL_MAP = {
 }
 
 
-def _wants_tool_call(response: dict) -> bool:
+def _extract_tool_call(content: str) -> dict | None:
+    """Return the first {\"tool\": ...} JSON object found in content, or None.
+
+    Uses raw_decode so nested objects (e.g. \"args\": {\"table\": ...}) are handled
+    correctly — a simple regex on {...} would miss the inner braces.
+    """
     try:
-        data = json.loads(response["message"]["content"])
-        return "tool" in data
-    except (json.JSONDecodeError, KeyError):
-        return False
+        data = json.loads(content)
+        if "tool" in data:
+            return data
+    except json.JSONDecodeError:
+        pass
+    decoder = json.JSONDecoder()
+    for match in re.finditer(r'\{', content):
+        try:
+            obj, _ = decoder.raw_decode(content, match.start())
+            if isinstance(obj, dict) and "tool" in obj:
+                return obj
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
+def _wants_tool_call(response: dict) -> bool:
+    return _extract_tool_call(response["message"]["content"]) is not None
 
 
 def _parse_tool_call(response: dict) -> tuple[str, dict]:
-    data = json.loads(response["message"]["content"])
+    data = _extract_tool_call(response["message"]["content"])
     return data["tool"], data.get("args", {})
 
 
