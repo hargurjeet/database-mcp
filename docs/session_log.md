@@ -71,7 +71,7 @@ Prefect scheduled scans — skipped by user decision.
 
 ---
 
-## Phase 4 — REST API (IN PROGRESS)
+## Phase 4 — REST API (COMPLETE, commit 90ca572 + 7849d5d)
 
 ### Goal
 Thin FastAPI layer on top of the existing MCP tools.
