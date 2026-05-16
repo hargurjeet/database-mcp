@@ -9,6 +9,10 @@ class BaseConnector(ABC):
         pass
 
     @abstractmethod
+    def list_tables(self) -> list[str]:
+        pass
+
+    @abstractmethod
     def get_schema(self, table: str) -> list[dict]:
         pass
 

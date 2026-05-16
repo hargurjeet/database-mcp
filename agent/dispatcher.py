@@ -9,6 +9,8 @@ from mcp_server.tools.schema_tools import get_schema
 from mcp_server.tools.null_tools import check_null_rates
 from mcp_server.tools.volume_tools import get_row_count
 from mcp_server.tools.distribution_tools import get_distribution_stats
+from mcp_server.tools.cardinality_tools import get_cardinality
+from mcp_server.tools.timestamp_tools import detect_timestamp_gaps
 
 load_dotenv()
 
@@ -19,6 +21,8 @@ _TOOL_MAP = {
     "check_null_rates": check_null_rates,
     "get_row_count": get_row_count,
     "get_distribution_stats": get_distribution_stats,
+    "get_cardinality": get_cardinality,
+    "detect_timestamp_gaps": detect_timestamp_gaps,
 }
 
 

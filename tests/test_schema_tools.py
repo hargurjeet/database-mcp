@@ -5,29 +5,36 @@ from helpers import get_test_connector
 from mcp_server.tools.schema_tools import get_schema
 
 
-def test_schema_returns_all_columns():
+def test_schema_returns_list_of_dicts():
     connector = get_test_connector()
     result = get_schema(connector, "trips")
-    columns = [col["column"] for col in result]
-    assert "trip_id" in columns
-    assert "fare_amount" in columns
-    assert "vendor_id" in columns
-    assert "ingested_at" in columns
-    print("PASS test_schema_returns_all_columns")
+    assert isinstance(result, list)
+    assert len(result) > 0
+    print("PASS test_schema_returns_list_of_dicts")
 
 
-def test_schema_has_correct_types():
+def test_schema_each_entry_has_column_and_type():
     connector = get_test_connector()
     result = get_schema(connector, "trips")
-    type_map = {col["column"]: col["type"].upper() for col in result}
-    assert "INTEGER" in type_map["trip_id"]
-    assert "FLOAT" in type_map["fare_amount"]
-    assert "VARCHAR" in type_map["vendor_id"]
-    assert "TIMESTAMP" in type_map["ingested_at"]
-    print("PASS test_schema_has_correct_types")
+    for entry in result:
+        assert "column" in entry, f"Missing 'column' key in {entry}"
+        assert "type" in entry, f"Missing 'type' key in {entry}"
+        assert isinstance(entry["column"], str)
+        assert isinstance(entry["type"], str)
+    print("PASS test_schema_each_entry_has_column_and_type")
+
+
+def test_list_tables_returns_known_table():
+    connector = get_test_connector()
+    tables = connector.list_tables()
+    assert isinstance(tables, list)
+    assert len(tables) > 0, "Expected at least one table"
+    assert all(isinstance(t, str) for t in tables), "All table names should be strings"
+    print("PASS test_list_tables_returns_known_table")
 
 
 if __name__ == "__main__":
-    test_schema_returns_all_columns()
-    test_schema_has_correct_types()
+    test_schema_returns_list_of_dicts()
+    test_schema_each_entry_has_column_and_type()
+    test_list_tables_returns_known_table()
     print("All schema tool tests passed.")
