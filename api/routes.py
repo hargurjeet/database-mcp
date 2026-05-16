@@ -1,6 +1,6 @@
 import os
-import json
-from fastapi import APIRouter, HTTPException
+import shutil
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from mcp_server.connectors.duckdb_connector import DuckDBConnector
 from mcp_server.tools.schema_tools import get_schema
@@ -51,6 +51,18 @@ def _run_full_check(connector, table: str) -> dict:
         if any(t in col_type for t in _TIME_TYPES):
             result["timestamp_gaps"][name] = detect_timestamp_gaps(connector, table, name)
     return result
+
+
+@router.post("/upload")
+async def upload_db_file(file: UploadFile = File(...)):
+    if not file.filename.endswith(".db"):
+        raise HTTPException(status_code=400, detail="Only .db files are supported")
+    upload_dir = os.path.join(os.getcwd(), "data", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    dest = os.path.join(upload_dir, file.filename)
+    with open(dest, "wb") as f:
+        shutil.copyfileobj(file.file, f)
+    return {"db_path": dest, "filename": file.filename}
 
 
 @router.get("/tables")

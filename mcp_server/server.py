@@ -1,4 +1,7 @@
 import json
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dotenv import load_dotenv
 from fastmcp import FastMCP
 from mcp_server.connectors.duckdb_connector import DuckDBConnector

@@ -71,7 +71,16 @@ Prefect scheduled scans — skipped by user decision.
 
 ---
 
-## Phase 4 — REST API (COMPLETE, commit 90ca572 + 7849d5d)
+## Phase 4 — REST API (COMPLETE, commits 90ca572, 7849d5d)
+
+### Additional fix — dispatcher tool-call extraction
+Replaced regex `[^{}]` with `json.JSONDecoder.raw_decode` to correctly extract
+JSON tool calls embedded in LLM prose. Regex failed on nested braces like
+`"args": {"table": "trips"}`. End-to-end Ollama pipeline verified with llama3.2.
+
+---
+
+## Phase 5 — Next.js Frontend (COMPLETE)
 
 ### Goal
 Thin FastAPI layer on top of the existing MCP tools.
@@ -94,14 +103,42 @@ Connection config passed as request body JSON (same shape as MCP tools).
 
 ---
 
+## Phase 5 — Next.js Frontend (COMPLETE)
+
+### Files created
+- `frontend/app/page.tsx` — 3-step state machine (Upload → Select Table → Results)
+- `frontend/components/FileUpload.tsx` — drag-and-drop .db file upload, validates .db extension
+- `frontend/components/TableSelector.tsx` — lists discovered tables as clickable cards
+- `frontend/components/ResultsDashboard.tsx` — full results dashboard:
+  - Summary cards (rows, columns, columns with nulls)
+  - Schema table with inline null %
+  - Horizontal bar chart for null rates (Recharts, green=clean, amber=has nulls)
+  - Distribution stat cards for numeric columns
+  - Cardinality tables for VARCHAR columns
+  - Timestamp gap alerts (amber highlight if large gaps detected)
+
+### FastAPI changes for frontend
+- Added CORS middleware (`allow_origins=["http://localhost:3000"]`) to `api/main.py`
+- Added `POST /upload` endpoint to `api/routes.py` — saves .db file to `data/uploads/`
+- Added `python-multipart>=0.0.9` to `requirements.txt`
+
+### How to run
+```bash
+# Terminal 1 — FastAPI backend
+source .venv/bin/activate && uvicorn api.main:app --reload
+
+# Terminal 2 — Next.js frontend
+cd frontend && npm run dev
+# Open http://localhost:3000
+```
+
+---
+
 ## Environment
-- Python 3.11+ (actually 3.14 based on pyc files)
-- `.venv` at project root
-- Run server: `python mcp_server/server.py`
-- Run agent: `python agent/dispatcher.py '{"db_type":"duckdb","db_path":"./data/warehouse.db","table":"trips"}'`
-- Dependencies: `fastmcp`, `duckdb`, `pandas`, `ollama`, `python-dotenv`
-- Env vars: `OLLAMA_MODEL`, `OLLAMA_BASE_URL`, `REPORTS_PATH`
-- No git remote configured yet
+- Python 3.14 — `.venv` at project root
+- Node 25.9.0 — frontend dependencies in `frontend/node_modules`
+- GitHub: https://github.com/hargurjeet/database-mcp
+- Ollama running locally with llama3.2 and mistral:7b available
 
 ---
 
@@ -111,3 +148,4 @@ Connection config passed as request body JSON (same shape as MCP tools).
 - No pytest — plain `python tests/test_*.py`
 - No hardcoded table or column names anywhere in source or tests
 - Phase-by-phase: implement one phase, stop for user to test before proceeding
+- Frontend uses file upload (not path input) — better UX, files saved to data/uploads/
